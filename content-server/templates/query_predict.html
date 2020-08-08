@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type " content="text/html; charset=UTF-8 " />
+     
+        <!-- Bootstrap -->
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+
+        <link rel="stylesheet" href="base/css/app.css" />
+        <link rel="screenshot" itemprop="screenshot" href="https://katspaugh.github.io/wavesurfer.js/example/screenshot.png" />
+
+        <!-- wavesurfer.js -->
+        <script src="https://unpkg.com/wavesurfer.js"></script>
+
+        <!-- plugins -->
+        <script src="base/dist/plugin/wavesurfer.timeline.js"></script>
+        <script src="base/dist/plugin/wavesurfer.regions.js"></script>
+        <script src="base/dist/plugin/wavesurfer.minimap.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+        <!-- App -->
+        <script type=text/javascript>
+            {% autoescape false %}
+                var QUERY_AUDIO_CONTAINER_NAME = {{ "'" + query_audio_container_name + "'" }}
+                var QUERY_AUDIO_NAME = {{ "'" + query_audio_name + "'" }}
+            {% endautoescape %}
+            // console.log(QUERY_AUDIO_NAME)
+
+        </script>
+        <script src="base/js/trivia.js"></script>
+        <script src="base/js/query_predict_app.js"></script>
+    </head>
+
+    <body itemscope itemtype="http://schema.org/WebApplication">
+        <div class="container">
+            <div id="demo">
+                <p class="text-left text-info">{{ query_audio_name }}</p>
+                <p id="subtitle" class="text-center text-info">&nbsp;</p>
+
+                <div id="wave-timeline"></div>
+
+                <div id="waveform">
+                    <!-- Here be waveform -->
+                </div>
+
+                <div class="row" style="margin: 30px 0">
+        
+
+                    <div class="col-sm-2">
+                        <button class="btn btn-primary btn-block" data-action="play">
+                            <span id="play">
+                                <i class="glyphicon glyphicon-play"></i>
+                                Play
+                            </span>
+
+                            <span id="pause" style="display: none">
+                                <i class="glyphicon glyphicon-pause"></i>
+                                Pause
+                            </span>
+                        </button>
+                    </div>
+
+                
+                </div>
+            </div>
+    </body>
+</html>
