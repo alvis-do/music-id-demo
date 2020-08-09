@@ -106,6 +106,8 @@ server {
 
     Note: Replace `example.com` with your domain
 
+Recommend: Follow tutorial and using Gunicorn to deploy, [here](https://medium.com/faun/deploy-flask-app-with-nginx-using-gunicorn-7fda4f50066a)
+
 # Thank you
 
 Author: Vu Do - DeepHub Team ♥️
