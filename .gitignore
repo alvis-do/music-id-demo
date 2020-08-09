@@ -2,3 +2,4 @@
 assets/*
 config.json
 .vscode
+__pycache__
