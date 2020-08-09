@@ -8,13 +8,21 @@
 
 2. Run the content-server:
 ```
-# python content-server/server.py
+# python content-server/server.py -p 8602
 -------------
 ...
-* Running on http://localhost:8601/ (Press CTRL+C to quit)
+* Running on http://localhost:8602/ (Press CTRL+C to quit)
 ```
 
-3. Run the streamlit app:
+3. Setup the config:
+
+    Duplicate `config.json.example` file and rename to `config.json`.
+
+    If you run at local machine, change the value of `content_server_name` option by the value from step 2.
+
+    If you run at server, repace that with `http://<domain_name>:<public_port>`. Remember that, you need to setup a proxy pass to localhost from step 2.
+
+4. Run the streamlit app:
 Open a new terminal,
 ```
 # streamlit run app.py
@@ -41,3 +49,63 @@ If you want to add more mached query audio into streamlit app, Please follow the
 |   |   |   |- annotation.json
 ```
 Note: Only the uppercase values ​​can be changed
+
+# How to deploy to server
+1. Install NGINX
+2. Run streamlit app (Refer to [How to run](#how-to-run) section)
+3. Config NGINX:
+
+- Edit the NGINX config file at `/etc/nginx/sites-available/default`:
+
+```
+server {
+    listen 8601;
+    listen [::]:8601;
+
+    server_name your_domain.com;
+    proxy_read_timeout 86400;
+
+    location / {
+        proxy_pass http://localhost:8602/;
+    }
+}
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name your_domain.com;
+    keepalive_timeout 5;
+
+    location / {
+        proxy_pass http://localhost:8501/;
+    }
+    location ^~ /static {
+        proxy_pass http://localhost:8501/static/;
+    }
+    location ^~ /healthz {
+        proxy_pass http://localhost:8501/healthz;
+    }
+
+    location ^~ /vendor {
+        proxy_pass http://localhost:8501/vendor;
+    }
+    location /stream { # most important config
+        proxy_pass http://localhost:8501/stream;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400;
+    }
+ }
+```
+
+- Restart the NGINX service after changed
+- Visit http://example.com on any browser.
+
+    Note: Replace `example.com` with your domain
+
+# Thank you
+
+Author: Vu Do - DeepHub Team ♥️
