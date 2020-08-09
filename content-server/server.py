@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, send_from_directory
 from flask_cors import CORS
+import click
+import sys
 
 app = Flask(__name__, 
             template_folder="templates", 
@@ -34,6 +36,11 @@ def asset_predict():
             query_audio_container_name=request.args.get("query_audio_container_name"),
             asset_audio_name=request.args.get("asset_audio_name"))
 
+@click.command()
+@click.option("-p", "--port", default=8602, help="The server port")
+def main(port):
+    app.run(host='localhost', port=port)
+
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8601)
+    main()
