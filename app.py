@@ -58,6 +58,9 @@ def create_footer_sidebar():
 - Hai Ngo \n
 DeepHub team ♥️
 [Source Code](https://github.com/kudos-cmd/music-id-demo)
+
+-----------
+Version 0.2
     """)
 
 def get_audio_summary():
