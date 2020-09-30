@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import pandas as pd
+from mutagen.mp3 import MP3
 
 EXTENSION = 'mp3'
 
@@ -71,11 +72,13 @@ def render_statistic():
     a = st.markdown("# Statistic")
 
 
+
 def display_matched_result(audio_container_name, has_pex_result=False):
     st.title(f"Matched Result For:")
     st.markdown(f'https://www.youtube.com/watch?v={audio_container_name}')
 
-    query_audio_name = os.path.basename(list(glob(root_path + f"/assets/{audio_container_name}/query/*.{EXTENSION}"))[0])
+    query_audio_path = list(glob(root_path + f"/assets/{audio_container_name}/query/*.{EXTENSION}"))[0]
+    query_audio_name = os.path.basename(query_audio_path)
     asset_audio_container_paths = glob(root_path + f"/assets/{audio_container_name}/assets/*")
 
     # Show summary
@@ -103,12 +106,48 @@ def display_matched_result(audio_container_name, has_pex_result=False):
         height=250)
 
     st.header(f'Asset Segments ({len(asset_audio_container_paths)}):')
+    match_duration = 0
     for asset_audio_container_path in asset_audio_container_paths:
+        # get duration
+        annot_path = os.path.join(asset_audio_container_path, 'annotation.json')
+        with open(annot_path, 'r') as annot_f:
+            annot_data = json.load(annot_f)
+            for data in annot_data:
+                start = float(data['start'])
+                end = float(data['end'])
+                match_duration += end - start
+
+        # show asset audio
         asset_audio_name = os.path.basename(asset_audio_container_path)
         components.iframe(
             f"{content_server_name}/asset_predict?query_audio_container_name={audio_container_name}&asset_audio_name={asset_audio_name}", 
             height=250)
 
+    display_summary(query_audio_path, len(asset_audio_container_paths), match_duration)
+
+
+def display_summary(q_path, num_match, match_duration):
+    audio = MP3(q_path)
+    length_in_secs = int(audio.info.length)
+    hours, mins, seconds = convert(length_in_secs)
+
+    st.title('Summary:')
+    
+    dataframe = pd.DataFrame([
+        ['Query audio duration', f'{str(hours).zfill(2)}:{str(mins).zfill(2)}:{str(seconds).zfill(2)}', '(hh:mm:ss)'],
+        ['Number of matches', num_match, '(match)'],
+        ['Rate (match duration/query duration)', f'{match_duration * 100/length_in_secs:.2f}', '(%)']], 
+        columns=['Metric', 'Value', 'Unit'])
+    st.table(dataframe)
+
+    del audio
+
+def convert(seconds):
+    hours = seconds // 3600
+    seconds %= 3600
+    mins = seconds // 60
+    seconds %= 60
+    return hours, mins, seconds
 
 if __name__ == "__main__":
     main()
