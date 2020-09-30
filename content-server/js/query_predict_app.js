@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
     queryAudioName = QUERY_AUDIO_NAME;
     annotationPath = `assets/${queryAudioContainerName}/query/annotation.json`;
     audioPath = `assets/${queryAudioContainerName}/query/${queryAudioName}`;
-   
+    console.log(audioPath)
+
     // Init wavesurfer
     wavesurfer = WaveSurfer.create({
         container: '#waveform',

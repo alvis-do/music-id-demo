@@ -5,10 +5,20 @@ import codecs
 from glob import glob
 import os
 import json
+import logging
+import pandas as pd
+
+EXTENSION = 'wav'
 
 root_path = os.path.dirname(os.path.abspath(__file__))
 config = {}
 
+log_file = root_path + '/.logs/default.log'
+logging.basicConfig(filename=log_file,
+                    format='%(asctime)s [%(levelname)s]: %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p',
+                    level=logging.INFO)
+# logging.info('hello')
 def main():
     global config
     # Load config
@@ -27,7 +37,11 @@ def main():
 
 def create_select_audio_sidebar(query_summary):
     st.sidebar.subheader("Select audio")
-    selected_audio = st.sidebar.selectbox('Search an audio', query_summary.get('names'), 0)
+    selected_audio = st.sidebar.selectbox(
+        'Search an audio', 
+        [f"{i + 1}. {r}" for i, r in enumerate(query_summary.get('names'))], 
+        0)
+    selected_audio = selected_audio.split(' ', 1)[-1]
     display_matched_result(selected_audio)
 
 def create_statistic_sidebar():
@@ -58,7 +72,19 @@ def render_statistic():
 
 
 def display_matched_result(audio_container_name, has_pex_result=False):
-    st.title(f"Result for {audio_container_name}")
+    st.title(f"Matched Result For:")
+    st.markdown(f'https://www.youtube.com/watch?v={audio_container_name}')
+
+    query_audio_name = os.path.basename(list(glob(root_path + f"/assets/{audio_container_name}/query/*.{EXTENSION}"))[0])
+    asset_audio_container_paths = glob(root_path + f"/assets/{audio_container_name}/assets/*")
+
+    # Show summary
+    # dataframe = pd.DataFrame(
+    #     np.array(get_result_dataframe(audio_container_name)),
+    #     columns=['Video ID', 'Matching Segments On Clip', 'Matching Segment on Asset', 'Asset Filename'])
+    # st.table(dataframe)
+
+    # Show detail
 
     content_server_name = config.get('content_server_name', "")
 
@@ -67,14 +93,15 @@ def display_matched_result(audio_container_name, has_pex_result=False):
         components.iframe(
             f"{content_server_name}/index_origin", 
             height=300)
-    
-    st.header('DeepHub Result:')
-    query_audio_name = os.path.basename(list(glob(root_path + f"/assets/{audio_container_name}/query/*.mp3"))[0])
+        st.header('DeepHub Result:')
+
+
+    # logging.info(query_audio_name)
+
     components.iframe(
         f"{content_server_name}/query_predict?query_audio_container_name={audio_container_name}&query_audio_name={query_audio_name}", 
         height=250)
 
-    asset_audio_container_paths = glob(root_path + f"/assets/{audio_container_name}/assets/*")
     st.header(f'Asset Segments ({len(asset_audio_container_paths)}):')
     for asset_audio_container_path in asset_audio_container_paths:
         asset_audio_name = os.path.basename(asset_audio_container_path)
