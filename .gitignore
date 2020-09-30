@@ -1,9 +1,12 @@
 .DS_Store
 
+!assets/
 assets/*
+!assets/XXXXXXXXXX/
 
 config.json
 .vscode
 __pycache__
 env/
 
+./logs

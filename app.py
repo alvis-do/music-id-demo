@@ -8,7 +8,7 @@ import json
 import logging
 import pandas as pd
 
-EXTENSION = 'wav'
+EXTENSION = 'mp3'
 
 root_path = os.path.dirname(os.path.abspath(__file__))
 config = {}
@@ -60,7 +60,7 @@ DeepHub team ♥️
     """)
 
 def get_audio_summary():
-    asset_names = [os.path.basename(p) for p in list(glob(root_path + "/assets/*"))]
+    asset_names = [os.path.basename(p) for p in list(glob(root_path + "/assets/*")) if os.path.basename(p) != 'XXXXXXXXXX']
     return {
         "names": asset_names
     }
