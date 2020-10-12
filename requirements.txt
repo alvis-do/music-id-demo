@@ -5,3 +5,4 @@ requests==2.24.0
 Jinja2==2.11.2
 click==7.1.2
 mutagen==1.45.1
+youtube-dl==2020.7.28

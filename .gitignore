@@ -7,6 +7,12 @@ assets/*
 config.json
 .vscode
 __pycache__
+*.pyc
+*.pyo
 env/
 
-./logs
+.logs
+.tmp
+*.mp3
+*.wav
+*.mp4
