@@ -1,0 +1,3 @@
+[submodule "audfprint"]
+	path = audfprint
+	url = git@gitlab.com:magiklab/anttizen/deephub/audfprint.git
