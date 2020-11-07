@@ -1,0 +1,49 @@
+
+server {
+    listen 80;
+    listen [::]:80;
+
+    client_max_body_size 100M;
+    server_name musicidcontent.deephub.vn;
+    proxy_read_timeout 3600;
+    proxy_connect_timeout 3600;
+    proxy_send_timeout 3600;
+
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    ssl_certificate /etc/letsencrypt/live/musicidcontent.deephub.vn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/musicidcontent.deephub.vn/privkey.pem;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/ubuntu/www/music-id-demo/content-server/app.sock;
+    }
+}
+server {
+    server_name musicid.deephub.vn www.musicid.deephub.vn;
+    listen 80;
+    listen [::]:80;
+
+    # SSL configuration
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    ssl_certificate /etc/letsencrypt/live/musicid.deephub.vn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/musicid.deephub.vn/privkey.pem;
+
+    client_max_body_size 100M;
+
+    proxy_http_version 1.1;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $host;
+
+    # streamlit specific:
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 86400;
+    proxy_connect_timeout 3600;
+    proxy_send_timeout 3600;
+
+    location / {
+        proxy_pass http://localhost:8501;
+    }
+}

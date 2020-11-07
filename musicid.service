@@ -1,0 +1,19 @@
+[Unit]
+#  specifies metadata and dependencies
+Description=Gunicorn instance to serve myproject
+After=network.target
+# tells the init system to only start this after the networking target has been reached
+# We will give our regular user account ownership of the process since it owns all of the relevant files
+[Service]
+# Service specify the user and group under which our process will run.
+User=ubuntu
+# give group ownership to the www-data group so that Nginx can communicate easily with the Gunicorn processes.
+Group=www-data
+# We'll then map out the working directory and set the PATH environmental variable so that the init system knows where our the executables for the p$
+WorkingDirectory=/home/ubuntu/www/music-id-demo/content-server
+Environment="PATH=/home/ubuntu/www/music-id-demo/venv/bin/"
+# We'll then specify the commanded to start the service
+ExecStart=/home/ubuntu/www/music-id-demo/venv/bin/gunicorn --workers 2 --bind unix:app.sock -m 007 wsgi:app
+# This will tell systemd what to link this service to if we enable it to start at boot. We want this service to start when the regular multi-user sy$
+[Install]
+WantedBy=multi-user.target

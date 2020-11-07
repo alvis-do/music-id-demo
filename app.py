@@ -14,6 +14,7 @@ import uuid
 import subprocess
 from pathlib import Path
 import shutil
+import traceback
 
 sys.path.append(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'audfprint'))
@@ -183,23 +184,25 @@ def create_live_demo():
         if yt_link:
             st.video(yt_link)
 
-            base_ydl_opts = {
-                'format': 'bestaudio/best',
-                'postprocessors': [
-                    {
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192',
-                    },
-                    {'key': 'FFmpegMetadata'},
-                ],
-                'outtmpl': str(TMP_DIR / 'live-%(id)s.%(ext)s')
-            }
+            def step_1():
+                base_ydl_opts = {
+                    'format': 'bestaudio/best',
+                    'postprocessors': [
+                        {
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                            'preferredquality': '192',
+                        },
+                        {'key': 'FFmpegMetadata'},
+                    ],
+                    'outtmpl': str(TMP_DIR / 'live-%(id)s.%(ext)s')
+                }
+                with youtube_dl.YoutubeDL(base_ydl_opts) as ydl:
+                    ydl.download([yt_link])
+                    # info = ydl.extract_info(str(yt_link), download=True)
+                    query_file_name = str(TMP_DIR / ('live-' + (yt_link.split('?v=')[1] + ".mp3")))
 
-            with youtube_dl.YoutubeDL(base_ydl_opts) as ydl:
-                ydl.download([yt_link])
-                # info = ydl.extract_info(str(yt_link), download=True)
-                query_file_name = str(TMP_DIR / 'live-' + (yt_link.split('?v=')[1] + ".mp3"))
+                return query_file_name
 
             step1_valid = True
             
@@ -211,16 +214,19 @@ def create_live_demo():
             video_bytes = file_upload.read()
             st.video(video_bytes)
 
-            id = 'live-' + uuid.uuid4().__str__()[-11:]
-            query_file_name_without_ext = str(TMP_DIR / id)
-            query_file_name = query_file_name_without_ext + '.mp4'
-            with open(query_file_name, 'wb') as f:
-                f.write(video_bytes)
-            
-            subprocess.run(f"ffmpeg -i {query_file_name} -ac 2 -f mp3 {query_file_name_without_ext + '.mp3'}", shell=True)
+            def step_1():
+                id = 'live-' + uuid.uuid4().__str__()[-11:]
+                query_file_name_without_ext = str(TMP_DIR / id)
+                query_file_name = query_file_name_without_ext + '.mp4'
+                with open(query_file_name, 'wb') as f:
+                    f.write(video_bytes)
+                
+                subprocess.run(f"ffmpeg -i {query_file_name} -ac 2 -f mp3 {query_file_name_without_ext + '.mp3'}", shell=True)
 
-            os.remove(query_file_name)
-            query_file_name = query_file_name_without_ext + '.mp3'
+                os.remove(query_file_name)
+                query_file_name = query_file_name_without_ext + '.mp3'
+
+                return query_file_name
 
             step1_valid = True
 
@@ -238,15 +244,18 @@ def create_live_demo():
         audio_bytes = file_upload_2.read()
         st.audio(audio_bytes)
 
-        id = uuid.uuid4().__str__()[-11:]
-        audio_fn = str(TMP_DIR / id)
-        with open(audio_fn, 'wb') as f:
-            f.write(audio_bytes)
-        
-        subprocess.run(f"ffmpeg -i {audio_fn} -ac 2 -f wav {audio_fn + '.mp3'}", shell=True)
+        def step_2():
+            id = uuid.uuid4().__str__()[-11:]
+            audio_fn = str(TMP_DIR / id)
+            with open(audio_fn, 'wb') as f:
+                f.write(audio_bytes)
+            
+            subprocess.run(f"ffmpeg -i {audio_fn} -ac 2 -f wav {audio_fn + '.mp3'}", shell=True)
 
-        os.remove(audio_fn)
-        asset_file_name = audio_fn + '.mp3'
+            os.remove(audio_fn)
+            asset_file_name = audio_fn + '.mp3'
+
+            return asset_file_name
 
         step2_valid = True
 
@@ -260,6 +269,10 @@ def create_live_demo():
         if not step1_valid or not step2_valid:
             st.error('Please complete Step 1 and Step 2 before!')
         else:
+            
+            query_file_name = step_1()
+            asset_file_name = step_2()
+
             args = get_args_default()
             args['match'] = True
             args['--density'] = "70"
@@ -280,9 +293,9 @@ def create_live_demo():
             hashes = analyzer.wavfile2hashes(filename=query_file_name)
             asset_hashes = analyzer.wavfile2hashes(filename=asset_file_name)
             hash_tab.store(query_file_name, hashes)
-
+                
             msgs, _ = matcher.file_match_to_msgs(analyzer, hash_tab, asset_file_name, asset_hashes)
-            
+
             result = get_result_from_output_lines(
                 source_files=[asset_file_name],
                 output_lines=msgs,
@@ -317,23 +330,24 @@ def create_live_demo():
 
 def mk_asset_structure(query_name, asset_name, matched_result):
     container_name = Path(query_name).stem
-    asset_container_name = Path(asset_name).stem
-
     container_path = Path(root_path) / 'assets' / container_name
-
-    c_asset_path = container_path / 'assets'
+        
     c_query_path = container_path / 'query'
-
-    asset_1 = c_asset_path / asset_container_name
-
-    asset_1.mkdir(parents=True, exist_ok=True)
     c_query_path.mkdir(parents=True, exist_ok=True)
-
     Path(query_name).rename(str(c_query_path / os.path.basename(query_name)))
+
+    annot_assets = matched_result[0].get('assets')
+    if len(annot_assets) <= 0:
+        return
+
+    asset_container_name = Path(asset_name).stem
+    c_asset_path = container_path / 'assets'
+    asset_1 = c_asset_path / asset_container_name
+    asset_1.mkdir(parents=True, exist_ok=True)
     Path(asset_name).rename(str(asset_1 / os.path.basename(asset_name)))
 
     # make annotation file
-    annot_asset = matched_result[0].get('assets')[0]
+    annot_asset = annot_assets[0]
     query_segments = annot_asset.get('query_segments')
     asset_segments = annot_asset.get('asset_segments')
 
